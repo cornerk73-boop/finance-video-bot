@@ -6,7 +6,10 @@ QUERIES = [
     "RBI OR SEBI OR Sensex OR Nifty when:1d",
     "GST OR budget OR income tax OR mutual fund OR bank when:1d",
     "share market OR gold price OR petrol price OR rupee when:1d",
+    "IPO OR आईपीओ OR IPO GMP OR IPO listing when:1d",
+    "IPO subscription OR IPO allotment OR SME IPO when:1d",
 ]
+IPO_WORDS = ["ipo", "आईपीओ", "gmp", "लिस्टिंग", "allotment", "अलॉटमेंट"]
 TRENDS_URL = "https://trends.google.com/trending/rss?geo=IN"
 
 
@@ -88,4 +91,7 @@ if __name__ == "__main__":
         json.dump(news, f, ensure_ascii=False, indent=2)
     for n in news:
         flag = " [TRENDING]" if n["trending"] else ""
-        print(f"{n['score']} | {n['publishers']} publishers{flag} | {n['title']}")
+            for n in news:
+        flag = " [TRENDING]" if n["trending"] else ""
+        ipo = " [IPO]" if any(k in n["title"].lower() for k in IPO_WORDS) else ""
+        print(f"{n['score']} | {n['publishers']} publishers{flag}{ipo} | {n['title']}")
