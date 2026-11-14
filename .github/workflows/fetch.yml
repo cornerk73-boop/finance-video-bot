@@ -18,3 +18,8 @@ jobs:
 
       - name: Fetch headlines
         run: python fetch_news.py
+
+      - name: Write Hindi script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python write_script.py
