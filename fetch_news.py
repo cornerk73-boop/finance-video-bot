@@ -91,7 +91,6 @@ if __name__ == "__main__":
         json.dump(news, f, ensure_ascii=False, indent=2)
     for n in news:
         flag = " [TRENDING]" if n["trending"] else ""
-            for n in news:
-        flag = " [TRENDING]" if n["trending"] else ""
-        ipo = " [IPO]" if any(k in n["title"].lower() for k in IPO_WORDS) else ""
+        low = n["title"].lower()
+        ipo = " [IPO]" if any(k in low for k in IPO_WORDS) else ""
         print(f"{n['score']} | {n['publishers']} publishers{flag}{ipo} | {n['title']}")
