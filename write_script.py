@@ -1,11 +1,16 @@
 import json
 import os
+import time
 import urllib.request
 import urllib.error
 
 API_KEY = os.environ["GEMINI_API_KEY"]
-URL = ("https://generativelanguage.googleapis.com/v1beta/models/"
-       "gemini-flash-latest:generateContent?key=" + API_KEY)
+MODELS = [
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash",
+]
+BASE = "https://generativelanguage.googleapis.com/v1beta/models/"
 
 PROMPT = """You are a scriptwriter for an Indian finance news YouTube Shorts channel.
 Topic headline: {title}
@@ -28,22 +33,38 @@ Return ONLY JSON with these keys:
 """
 
 
-def ask(title):
+def call(model, title):
+    url = BASE + model + ":generateContent?key=" + API_KEY
     body = {
         "contents": [{"parts": [{"text": PROMPT.format(title=title)}]}],
         "generationConfig": {"responseMimeType": "application/json"},
     }
     req = urllib.request.Request(
-        URL, data=json.dumps(body).encode("utf-8"),
+        url, data=json.dumps(body).encode("utf-8"),
         headers={"Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=90) as r:
-            data = json.load(r)
-    except urllib.error.HTTPError as e:
-        print("API error:", e.read().decode("utf-8")[:500])
-        raise
+    with urllib.request.urlopen(req, timeout=90) as r:
+        data = json.load(r)
     text = data["candidates"][0]["content"]["parts"][0]["text"]
     return json.loads(text)
+
+
+def ask(title):
+    for model in MODELS:
+        for attempt in range(1, 4):
+            try:
+                print(f"Trying {model} (attempt {attempt})")
+                return call(model, title)
+            except urllib.error.HTTPError as e:
+                msg = e.read().decode("utf-8")[:200]
+                print("HTTP", e.code, msg)
+                if e.code in (429, 500, 503):
+                    time.sleep(10 * attempt)
+                    continue
+                break  # other errors: try next model
+            except Exception as e:
+                print("Error:", e)
+                time.sleep(5)
+    raise SystemExit("All models busy. Please re-run in a few minutes.")
 
 
 if __name__ == "__main__":
