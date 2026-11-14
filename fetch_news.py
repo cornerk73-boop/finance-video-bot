@@ -2,26 +2,84 @@ import feedparser
 import json
 import urllib.parse
 
-QUERY = "RBI OR SEBI OR Sensex OR Nifty OR GST OR budget OR mutual fund OR income tax when:1d"
+QUERIES = [
+    "RBI OR SEBI OR Sensex OR Nifty when:1d",
+    "GST OR budget OR income tax OR mutual fund OR bank when:1d",
+    "share market OR gold price OR petrol price OR rupee when:1d",
+]
+TRENDS_URL = "https://trends.google.com/trending/rss?geo=IN"
 
-URL = (
-    "https://news.google.com/rss/search?q="
-    + urllib.parse.quote(QUERY)
-    + "&hl=hi&gl=IN&ceid=IN:hi"
-)
+
+def rss_url(q):
+    return ("https://news.google.com/rss/search?q="
+            + urllib.parse.quote(q) + "&hl=hi&gl=IN&ceid=IN:hi")
 
 
-def fetch_news(limit=15):
-    feed = feedparser.parse(URL)
+def clean(title):
+    return title.rsplit(" - ", 1)[0].strip()
+
+
+def words(text):
+    return set(w.strip(",.:;'\"|-?!()") for w in text.lower().split())
+
+
+def similar(a, b):
+    if not a or not b:
+        return False
+    return len(a & b) / len(a | b) >= 0.3
+
+
+def get_trends():
+    try:
+        feed = feedparser.parse(TRENDS_URL)
+        return [e.title.lower() for e in feed.entries]
+    except Exception:
+        return []
+
+
+def fetch_news(top=10):
     items = []
-    for e in feed.entries[:limit]:
-        items.append({
-            "title": e.title,
-            "link": e.link,
-            "published": e.get("published", ""),
-            "source": e.get("source", {}).get("title", ""),
+    seen = set()
+    for q in QUERIES:
+        for e in feedparser.parse(rss_url(q)).entries:
+            if e.link in seen:
+                continue
+            seen.add(e.link)
+            items.append({
+                "title": clean(e.title),
+                "link": e.link,
+                "published": e.get("published", ""),
+                "source": e.get("source", {}).get("title", ""),
+            })
+
+    clusters = []
+    for it in items:
+        w = words(it["title"])
+        for c in clusters:
+            if similar(w, c["words"]):
+                c["items"].append(it)
+                break
+        else:
+            clusters.append({"words": w, "items": [it]})
+
+    trends = get_trends()
+    results = []
+    for c in clusters:
+        first = c["items"][0]
+        sources = {i["source"] for i in c["items"] if i["source"]}
+        trend_hit = any(t in first["title"].lower() for t in trends)
+        score = len(sources) + (2 if trend_hit else 0)
+        results.append({
+            "title": first["title"],
+            "link": first["link"],
+            "published": first["published"],
+            "publishers": len(sources),
+            "trending": trend_hit,
+            "score": score,
         })
-    return items
+
+    results.sort(key=lambda r: r["score"], reverse=True)
+    return results[:top]
 
 
 if __name__ == "__main__":
@@ -29,4 +87,5 @@ if __name__ == "__main__":
     with open("topics.json", "w", encoding="utf-8") as f:
         json.dump(news, f, ensure_ascii=False, indent=2)
     for n in news:
-        print("-", n["title"])
+        flag = " [TRENDING]" if n["trending"] else ""
+        print(f"{n['score']} | {n['publishers']} publishers{flag} | {n['title']}")
