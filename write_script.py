@@ -44,7 +44,7 @@ Return ONLY JSON with these keys:
 "script": the full Hindi narration,
 "description": Hindi description, 3 lines, with disclaimer,
 "tags": list of 10 tags (Hindi and English),
-"image_keywords": list of 8 English search words for stock photos
+"image_keywords": list of 8 stock photo search phrases in the order of the script. Each is 2-3 plain English words naming a concrete object or place, such as "indian rupee notes", "smartphone payment", "bank building", "stock market chart", "calculator money", "gold coins", "mumbai skyline", "office desk". NO brand names, NO company names, NO people, NO faces, NO logos, NO news or newspaper words.
 """
 
 
