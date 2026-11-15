@@ -30,7 +30,7 @@ with open("list.txt", "w") as lst:
              "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", out])
         lst.write(f"file '{out}'\n")
 
-style = ("FontName=Noto Sans Devanagari,FontSize=14,"
+style = ("FontName=Lohit Devanagari,FontSize=14,"
          "PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
          "BorderStyle=1,Outline=2,Shadow=0,MarginV=35,Alignment=2")
 run(["ffmpeg", "-y", "-loglevel", "error",
