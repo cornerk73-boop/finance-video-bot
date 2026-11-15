@@ -2,8 +2,7 @@ import asyncio
 import json
 import edge_tts
 
-VOICE = "hi-IN-MadhurNeural"  # male; for female use hi-IN-SwaraNeural
-
+VOICE = "hi-IN-SwaraNeural"  # female;
 
 async def main():
     data = json.load(open("script.json", encoding="utf-8"))
